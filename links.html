@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#16030a">
+<title>Guest links · Dev &amp; Chani Homecoming</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@200;300;400;500;600&display=swap">
+<style>
+:root{--gold:#D9B98A;--rose:#FF8FA0;--ui:"Montserrat",system-ui,sans-serif;--serif:"Cormorant Garamond",Georgia,serif;--script:"Allura",cursive;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:var(--ui);font-weight:300;font-size:15px;line-height:1.6;color:#fff;padding:30px 16px 70px;
+  background:radial-gradient(60% 40% at 15% 6%,rgba(170,20,40,.8),transparent 70%),radial-gradient(55% 45% at 92% 60%,rgba(130,12,30,.75),transparent 70%),#16030a;background-attachment:fixed}
+.wrap{max-width:720px;margin:0 auto}
+h1{margin:0;text-align:center;font-family:var(--script);font-weight:400;font-size:clamp(2.6rem,11vw,3.6rem);line-height:1.1;color:transparent;
+  background:linear-gradient(100deg,#A97D4C,#E9CFA0 30%,#FFF6DC 45%,#E9CFA0 58%,#A97D4C);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.sub{text-align:center;font-size:.62rem;letter-spacing:.42em;padding-left:.42em;text-transform:uppercase;color:rgba(231,201,160,.9);margin:.2rem 0 1.6rem}
+.box{background:rgba(20,2,8,.55);border:1px solid rgba(217,185,138,.35);border-radius:14px;padding:18px;margin-bottom:16px;backdrop-filter:blur(4px)}
+label{display:block;font-size:.66rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin:0 0 6px}
+.hint{font-size:.78rem;color:rgba(255,255,255,.6);margin:6px 0 0}
+input,textarea{width:100%;font:inherit;font-size:.92rem;color:#fff;background:rgba(0,0,0,.35);border:1px solid rgba(217,185,138,.35);border-radius:8px;padding:10px 12px}
+textarea{resize:vertical;min-height:120px}
+input:focus,textarea:focus{outline:2px solid var(--rose);outline-offset:2px}
+.btn{display:inline-block;font:inherit;font-size:.7rem;font-weight:500;letter-spacing:.22em;text-transform:uppercase;text-decoration:none;cursor:pointer;color:#2a0a10;background:linear-gradient(135deg,#F3DDB0,#D9B98A 55%,#B98A55);border:0;border-radius:999px;padding:11px 20px}
+.btn.ghost{background:transparent;color:var(--gold);border:1px solid rgba(217,185,138,.6)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.card{display:grid;gap:8px;padding:14px 0;border-top:1px solid rgba(217,185,138,.2)}
+.card:first-child{border-top:0}
+.nm{font-family:var(--serif);font-style:italic;font-size:1.3rem;color:#EBD3AA}
+.ph{font-size:.75rem;color:rgba(255,255,255,.55);margin-left:8px;font-style:normal;font-family:var(--ui)}
+.card input{font-size:.78rem}
+.cnt{font-size:.8rem;color:rgba(255,255,255,.65);margin-bottom:6px}
+.warn{color:#ffb3bd;font-size:.85rem;margin-top:8px;min-height:1.2em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Guest links</h1>
+  <p class="sub">Dev &amp; Chani · Homecoming</p>
+
+  <div class="box">
+    <label for="base">Invitation web address</label>
+    <input id="base" type="url" inputmode="url" placeholder="https://your-name.github.io/your-repo/" autocomplete="off">
+    <p class="hint">The address where index.html is hosted. When this page is opened from the hosted site it fills in by itself.</p>
+  </div>
+
+  <div class="box">
+    <label for="names">Guest names (one per line)</label>
+    <textarea id="names" placeholder="Nimal Perera, 0771234567&#10;Kamala Silva&#10;Fernando Family"></textarea>
+    <p class="hint">Phone number is optional. Write it after a comma if you want the WhatsApp button to open that person's chat directly.</p>
+  </div>
+
+  <div class="box">
+    <label for="msg">WhatsApp message</label>
+    <textarea id="msg" style="min-height:130px"></textarea>
+    <p class="hint">{name} and {link} are replaced for every guest.</p>
+    <div class="row" style="margin-top:14px"><button class="btn" id="go" type="button">Make links</button><button class="btn ghost" id="all" type="button" hidden>Copy all</button></div>
+    <p class="warn" id="warn" role="alert"></p>
+  </div>
+
+  <div class="box" id="res" hidden>
+    <p class="cnt" id="cnt"></p>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(s){ return document.querySelector(s); };
+  var KEY = "cd-links-v1";
+  function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+
+  var DEFMSG = "Dear {name},\n\nDev & Chani warmly invite you to their homecoming on 12 December 2026 at Hotel Green Court.\n\nPlease open your invitation and let us know if you can join us:\n{link}";
+  var saved = {}; try { saved = JSON.parse(lsGet(KEY) || "{}") || {}; } catch (e) {}
+  var guess = /^https?:/.test(location.href) ? location.href.split("#")[0].split("?")[0].replace(/links\.html$/i, "") : "";
+  $("#base").value = saved.base || guess;
+  $("#names").value = saved.names || "";
+  $("#msg").value = saved.msg || DEFMSG;
+
+  function phone(p){ var d = String(p || "").replace(/[^\d]/g, ""); if (!d) return ""; if (d.charAt(0) === "0") d = "94" + d.slice(1); return d; }
+  function parse(){
+    return $("#names").value.split(/\n/).map(function(l){
+      l = l.trim(); if (!l) return null;
+      var parts = l.split(/[,\t]/);
+      var n = parts[0].replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 40);
+      return n ? { name: n, phone: phone(parts.slice(1).join("")) } : null;
+    }).filter(Boolean);
+  }
+  function copy(text, btn){
+    function ok(){ var t = btn.textContent; btn.textContent = "Copied ✓"; setTimeout(function(){ btn.textContent = t; }, 1500); }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(ok, fallback); } else fallback();
+    function fallback(){
+      var ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); ok(); } catch (e) {}
+      ta.remove();
+    }
+  }
+
+  var current = [];
+  function build(){
+    var warn = $("#warn"); warn.textContent = "";
+    var base = $("#base").value.trim().split("#")[0].split("?")[0];
+    var guests = parse();
+    if (!/^https?:\/\//i.test(base)) { warn.textContent = "Please enter the full invitation web address (starting with https://)."; return; }
+    if (!guests.length) { warn.textContent = "Please add at least one guest name."; return; }
+    lsSet(KEY, JSON.stringify({ base: base, names: $("#names").value, msg: $("#msg").value }));
+    var msgT = $("#msg").value || DEFMSG;
+    var list = $("#list"); list.innerHTML = ""; current = [];
+    guests.forEach(function(g){
+      var link = base + "?to=" + encodeURIComponent(g.name);
+      var text = msgT.replace(/\{name\}/g, g.name).replace(/\{link\}/g, link);
+      current.push(g.name + ": " + link);
+
+      var card = document.createElement("div"); card.className = "card";
+      var nm = document.createElement("div"); nm.className = "nm"; nm.textContent = g.name;
+      if (g.phone) { var ph = document.createElement("span"); ph.className = "ph"; ph.textContent = "+" + g.phone; nm.appendChild(ph); }
+      var inp = document.createElement("input"); inp.readOnly = true; inp.value = link; inp.setAttribute("aria-label", "Link for " + g.name);
+      inp.addEventListener("focus", function(){ inp.select(); });
+      var row = document.createElement("div"); row.className = "row";
+      var c = document.createElement("button"); c.type = "button"; c.className = "btn ghost"; c.textContent = "Copy link";
+      c.addEventListener("click", function(){ copy(link, c); });
+      var w = document.createElement("a"); w.className = "btn"; w.target = "_blank"; w.rel = "noopener noreferrer"; w.textContent = "WhatsApp";
+      w.href = "https://wa.me/" + g.phone + "?text=" + encodeURIComponent(text);
+      row.appendChild(w); row.appendChild(c);
+      card.appendChild(nm); card.appendChild(inp); card.appendChild(row);
+      list.appendChild(card);
+    });
+    $("#cnt").textContent = guests.length + (guests.length === 1 ? " link ready" : " links ready");
+    $("#res").hidden = false; $("#all").hidden = false;
+    $("#res").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("#go").addEventListener("click", build);
+  $("#all").addEventListener("click", function(){ copy(current.join("\n"), $("#all")); });
+})();
+</script>
+</body>
+</html>

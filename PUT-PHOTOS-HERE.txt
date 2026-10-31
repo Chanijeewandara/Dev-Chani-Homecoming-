@@ -1,0 +1,7 @@
+Put the two photos in this folder with exactly these names:
+
+  couple1.jpg   (main photo: background watermark, hero and gallery)
+  couple2.jpg   (second gallery photo)
+
+Tip: keep each photo under about 400 KB so the page opens fast on phones.
+If a photo is missing, the page simply shows the "D & C" monogram instead.
